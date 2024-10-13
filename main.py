@@ -38,6 +38,7 @@ def checkPortUrlValues(port_number, url):
 
 def main():
     port_number, url = extractPortUrl(sys.argv)
+    cached_responses = {}
 
     server_socket = createServerSocket(port_number)
     server_socket.settimeout(1)
@@ -49,10 +50,17 @@ def main():
                 client_conn, client_addr = server_socket.accept()
                 with client_conn:
                     print(f"Connected by {client_addr}")
-                    client_request = client_conn.recv(1024)    
-                    
-                    response = forwardClientRequest(client_request, url)
-                    client_conn.sendall(response)
+                    client_request = client_conn.recv(1024)
+
+                    if client_request in cached_responses:
+                        print("Cached Response")
+                        client_conn.sendall(cached_responses[client_request])
+                    else:
+                        print("Not Cached")                    
+                        response = forwardClientRequest(client_request, url)
+                        cached_responses[client_request] = response
+                        client_conn.sendall(response)
+
             except socket.timeout:
                 pass
             except KeyboardInterrupt:
