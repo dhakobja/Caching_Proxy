@@ -7,7 +7,7 @@ def createServerSocket(port_number: int) -> socket.socket:
 
     return server_socket    
 
-def forwardClientRequest(client_request:str, url: str) -> str:
+def forwardClientRequest(client_request:str, url: str) -> bytes:
     # Strip the protocol from the URL if it exists
     if url.startswith("http://"):
         url = url[len("http://"):]
@@ -23,3 +23,16 @@ def forwardClientRequest(client_request:str, url: str) -> str:
         response = proxy_socket.recv(4096)
 
         return response
+    
+def responseWithCachedStatus(response: bytes, cached: bool) -> bytes:
+    if cached:
+        cached_header = "X-Cache: HIT"
+    else:
+        cached_header = "X-Cache: MISS"
+
+    decoded_response = response.decode()
+    header_index = decoded_response.index("Content-Type: text/html;")
+
+    updated_response = decoded_response[0:header_index] + f"{cached_header}\r\n" + decoded_response[header_index:]
+
+    return updated_response.encode()

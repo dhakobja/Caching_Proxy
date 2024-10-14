@@ -2,7 +2,7 @@ import sys
 import validators
 import socket
 
-from server import createServerSocket, forwardClientRequest
+from server import createServerSocket, forwardClientRequest, responseWithCachedStatus
 
 def extractPortUrl(arguments):
     port_number = None
@@ -53,14 +53,15 @@ def main():
                     client_request = client_conn.recv(1024)
 
                     if client_request in cached_responses:
-                        print("Cached Response")
-                        client_conn.sendall(cached_responses[client_request])
-                    else:
-                        print("Not Cached")                    
+                        response = cached_responses[client_request]
+                        modified_response = responseWithCachedStatus(response, True)
+                        client_conn.sendall(modified_response)
+                    else:                  
                         response = forwardClientRequest(client_request, url)
                         cached_responses[client_request] = response
-                        client_conn.sendall(response)
 
+                        modified_response = responseWithCachedStatus(response, False)
+                        client_conn.sendall(modified_response)
             except socket.timeout:
                 pass
             except KeyboardInterrupt:
