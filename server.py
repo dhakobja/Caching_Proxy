@@ -1,5 +1,4 @@
 import socket
-from typing import Tuple
 
 def createServerSocket(port_number: int) -> socket.socket:
     addr = ("", port_number)
