@@ -2,6 +2,7 @@ import sys
 import validators
 import socket
 import threading
+from datetime import datetime
 
 from server import createServerSocket, forwardClientRequest, responseWithCachedStatus
 
@@ -44,6 +45,18 @@ def clear_cache_input(cached_responses: dict):
         except EOFError:
             break
 
+def cached_response_expired(cached_responses: dict, client_request: str, cache_expiration_time: int) -> bool:
+    timestamp_response = cached_responses[client_request]["timestamp"]
+
+    current_time = datetime.now()
+
+    difference_in_seconds = (current_time - timestamp_response).total_seconds()
+
+    if difference_in_seconds > cache_expiration_time:
+        return True
+    
+    return False
+
 def main():
     port_number, url = extractPortUrl(sys.argv)
     cached_responses = {}
@@ -55,24 +68,31 @@ def main():
     input_thread = threading.Thread(target=clear_cache_input, args=(cached_responses,), daemon=True)
     input_thread.start()
 
+    cache_expiration_time = 10 # Seconds
+
     with server_socket:
         while True:
             try:
                 server_socket.listen(1)
-                client_conn, client_addr = server_socket.accept()
+                client_conn, _ = server_socket.accept()
                 with client_conn:
-                    client_request = client_conn.recv(1024)
-
-                    if client_request in cached_responses:
-                        response = cached_responses[client_request]
+                    client_request = client_conn.recv(8192)
+                    
+                    if client_request in cached_responses and not cached_response_expired(cached_responses, client_request, cache_expiration_time):
+                        response = cached_responses[client_request]["response"]
                         modified_response = responseWithCachedStatus(response, True)
-                        client_conn.sendall(modified_response)
                     else:                  
                         response = forwardClientRequest(client_request, url)
-                        cached_responses[client_request] = response
+                        timed_response = {
+                            "response": response,
+                            "timestamp": datetime.now()
+                        }
+
+                        cached_responses[client_request] = timed_response
 
                         modified_response = responseWithCachedStatus(response, False)
-                        client_conn.sendall(modified_response)
+
+                    client_conn.sendall(modified_response)
             except socket.timeout:
                 pass
             except KeyboardInterrupt:
