@@ -2,7 +2,7 @@
 
 This project is a command-line interface (CLI) tool that starts a caching proxy server. The proxy server forwards client requests to an origin server, caches the responses, and returns cached responses when repeated requests are made. This caching mechanism improves efficiency by reducing redundant requests to the origin server.
 
-This project is based on backend challenge called "Caching Proxy" from [roadmap.sh](https://roadmap.sh/), intended to deepen understanding of caching and request forwarding in network programming.
+This project is based on backend challenge called "Caching Proxy" from [roadmap.sh](https://roadmap.sh/projects/caching-server), intended to deepen understanding of caching and request forwarding in network programming.
 
 ## Features
 - **Request Forwarding**: Forwards client requests to the specified origin server.
