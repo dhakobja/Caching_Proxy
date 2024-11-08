@@ -68,7 +68,7 @@ def main():
     input_thread = threading.Thread(target=clear_cache_input, args=(cached_responses,), daemon=True)
     input_thread.start()
 
-    cache_expiration_time = 10 # Seconds
+    cache_expiration_time_seconds = 10
 
     with server_socket:
         while True:
@@ -78,7 +78,7 @@ def main():
                 with client_conn:
                     client_request = client_conn.recv(8192)
                     
-                    if client_request in cached_responses and not cached_response_expired(cached_responses, client_request, cache_expiration_time):
+                    if client_request in cached_responses and not cached_response_expired(cached_responses, client_request, cache_expiration_time_seconds):
                         response = cached_responses[client_request]["response"]
                         modified_response = responseWithCachedStatus(response, True)
                     else:                  
